@@ -1,0 +1,13 @@
+[Unit]
+Description=Papertrail journal forwarder 
+After=systemd-journald.service
+Requires=systemd-journald.service
+
+[Service]
+ExecStart=/bin/sh -c "curl --silent --unix-socket /var/run/journald.sock -H Accept:application/json http://journal/entries?follow | ncat --ssl logs3.papertrailapp.com 50218"
+TimeoutStartSec=0
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
