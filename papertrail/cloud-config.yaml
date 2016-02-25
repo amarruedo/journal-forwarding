@@ -1,0 +1,43 @@
+#cloud-config
+
+coreos:
+  update:
+    reboot-strategy: "off"
+
+  etcd2:
+    name: {{ETCD_NODE_NAME}}
+    initial-cluster: {{ETCD_INITIAL_CLUSTER}}
+    advertise-client-urls: http://$private_ipv4:2379
+    listen-client-urls: http://0.0.0.0:2379
+    initial-advertise-peer-urls: http://$private_ipv4:2380
+    listen-peer-urls: http://$private_ipv4:2380
+
+  units:
+
+  - name: etcd2.service
+    command: start
+  - name: fleet.service
+    command: start
+  - name: systemd-journal-gatewayd.socket
+    command: start
+    enable: yes
+    content: |
+        [Unit] 
+        Description=Journal Gateway Service Socket
+        [Socket] 
+        ListenStream=/var/run/journald.sock
+        Service=systemd-journal-gatewayd.service
+        [Install] 
+        WantedBy=sockets.target
+  - name: journal-2-logentries.service
+    command: start
+    content: |
+        [Unit]
+        Description=Forward Systemd Journal to logentries.com
+        After=docker.service
+        Requires=docker.service
+        [Service]
+        ExecStart=/bin/sh -c "curl --silent --unix-socket /var/run/journald.sock -H Accept:application/json http://journal/entries?follow | ncat --ssl logs3.papertrailapp.com 50218"
+        TimeoutStartSec=0
+        Restart=on-failure
+        RestartSec=5s

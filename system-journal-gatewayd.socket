@@ -1,0 +1,7 @@
+[Unit]
+Description=Journal Gateway Service Socket
+[Socket] 
+ListenStream=/var/run/journald.sock 
+Service=systemd-journal-gatewayd.service
+[INSTALL]
+WantedBy=sockets.target
