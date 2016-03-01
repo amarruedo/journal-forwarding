@@ -1,0 +1,16 @@
+[Unit]
+Description=Forward Systemd Journal to loggly.com
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/bash -c "/usr/bin/docker run --rm -v /var/log/journal:/var/log/journal:ro quay.io/amarruedo/logstash-journald logstash -e 'input { journald { } } output { loggly { key => \"YOUR_LOGGLY_KEY\" tag => \"logstash\" host => \"logs-01.loggly.com\" proto => \"https\" } }'"
+
+[Install]
+WantedBy=multi-user.target
+
+[X-Fleet]
+Global=true
